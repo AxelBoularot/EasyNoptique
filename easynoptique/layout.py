@@ -317,7 +317,7 @@ def layout_functional(syn: Synoptic, detailed: bool = False) -> Scene:
     left.sort(key=lambda b: (b.category == "power", b.name))
     order = ["radio", "hmi", "sensors", "memory", "interface", "other", "power"]
     right.sort(key=lambda b: (order.index(b.category) if b.category in order else 99, b.name))
-    col = {b.id: "L" for b in left} | {b.id: "R" for b in right} | {b.id: "B" for b in bottom} | {hub: "H"}
+    col = {**{b.id: "L" for b in left}, **{b.id: "R" for b in right}, **{b.id: "B" for b in bottom}, hub: "H"}
 
     def count(c1: str, c2: str) -> int:
         return sum(1 for lk in links if {col[lk.a], col[lk.b]} == {c1, c2} or (c1 == c2 and col[lk.a] == col[lk.b] == c1))

@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Tuple
 
-Point = tuple[float, float]
+Point = Tuple[float, float]
 
 
 @dataclass

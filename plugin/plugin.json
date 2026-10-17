@@ -5,7 +5,7 @@
   "description": "Génère automatiquement les synoptiques (fonctionnel, alimentation, bus) du projet en SVG, draw.io et HTML.",
   "runtime": {
     "type": "python",
-    "min_version": "3.9"
+    "min_version": "3.8"
   },
   "actions": [
     {
