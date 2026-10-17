@@ -14,7 +14,7 @@ Autres vues : [alimentation](docs/exemple/station-meteo-de-poche-alimentation.sv
 
 ## Installation dans KiCad (plugin)
 
-1. Téléchargez [`release/EasyNoptique-0.2.0-kicad.zip`](release/EasyNoptique-0.2.0-kicad.zip) (bouton « Download raw file »).
+1. Téléchargez [`release/EasyNoptique-0.2.1-kicad.zip`](release/EasyNoptique-0.2.1-kicad.zip) (bouton « Download raw file »).
 2. Dans KiCad : **Gestionnaire de plugins et de contenus** → **Installer depuis un fichier…** → choisissez le `.zip`.
 3. Ouvrez votre circuit dans l'**éditeur de PCB**. Un bouton EasyNoptique apparaît dans la barre d'outils
    (sinon : **Outils → Outils externes → Actualiser les plugins**).

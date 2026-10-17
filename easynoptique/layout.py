@@ -213,10 +213,18 @@ def draw_block(scene: Scene, b: Block, r: Rect, is_hub: bool, detailed: bool) ->
             y = r.y + HEAD + limit * (ITEM_H + ITEM_GAP)
             scene.add(Shape(f"{r.sid}-more", "box", r.x + 10, y, r.w - 20, ITEM_H, label=f"+ {extra} autres",
                             stroke=stroke, dashed=True, block=b.id, z=3))
-    for k, rail in enumerate(b.rails):
-        bw = 8 + 6.2 * len(rail)
-        scene.add(Shape(f"{r.sid}-badge-{k}", "badge", r.right - bw - 6 - k * (bw + 4), r.y - 8, bw, 16, label=rail,
-                        fill=BADGE_FILL, stroke=BADGE_FILL, text_color="#ffffff", bold=True, font=9, radius=8, z=4))
+    add_badges(scene, r, b.rails)
+
+
+def add_badges(scene: Scene, r: Rect, rails: list[str]) -> None:
+    """Pastilles de rails posées au-dessus du bloc, alignées à droite, sans chevauchement."""
+    x = r.right
+    for k, rail in enumerate(rails):
+        bw = 12 + 6.4 * len(rail)
+        x -= bw
+        scene.add(Shape(f"{r.sid}-badge-{k}", "badge", x, r.y - 21, bw, 16, label=rail, fill=BADGE_FILL,
+                        stroke=BADGE_FILL, text_color="#ffffff", bold=True, font=9, radius=8, z=4))
+        x -= 5
 
 
 def add_board(scene: Scene, x2: float, y2: float, title: str) -> Rect:
@@ -363,10 +371,7 @@ def layout_functional(syn: Synoptic, detailed: bool = False) -> Scene:
             detail = ", ".join(f"{it.ref} {short(it.value, 26)}" for it in b.items[:4])
             scene.add(Shape(r.sid, "bar", r.x, r.y, r.w, r.h, label=f"{b.name} : {detail}" if detail else b.name,
                             fill=fill, stroke=stroke, block=b.id, z=3))
-            for k, rail in enumerate(b.rails):
-                bw = 8 + 6.2 * len(rail)
-                scene.add(Shape(f"{r.sid}-badge-{k}", "badge", r.right - bw - 6, r.y - 8, bw, 16, label=rail,
-                                fill=BADGE_FILL, stroke=BADGE_FILL, text_color="#ffffff", bold=True, font=9, radius=8, z=4))
+            add_badges(scene, r, b.rails)
         else:
             draw_block(scene, b, r, b.id == hub, detailed)
 

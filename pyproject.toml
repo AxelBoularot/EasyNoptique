@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "easynoptique"
-version = "0.2.0"
+version = "0.2.1"
 description = "Génération automatique de synoptiques (fonctionnel, alimentation, bus) à partir d'un projet KiCad"
 readme = "README.md"
 requires-python = ">=3.8"

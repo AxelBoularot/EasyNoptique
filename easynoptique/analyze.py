@@ -175,6 +175,10 @@ def _analyze(nl: Netlist, rules: Rules) -> Synoptic:
                 kind_of[n.name] = "power"
             else:
                 kind_of[n.name] = "signal"
+    # Nets d'alimentation sans nom (Net-(U5-VCAP_1)…) : ni rail affiché, ni signal
+    for n in nets:
+        if kind_of[n.name] == "power" and n.is_auto:
+            kind_of[n.name] = "power_aux"
     net_by_name = {n.name: n for n in nets}
 
     # --- 2. Blocs ----------------------------------------------------------
