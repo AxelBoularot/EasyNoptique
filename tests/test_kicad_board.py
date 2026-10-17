@@ -206,3 +206,33 @@ def test_regulateur_mal_type_et_alims_visibles():
     scene = layout_functional(syn)
     hub_box = next(s for s in scene.shapes if s.block == "mcu" and s.kind == "box")
     assert hub_box.sub == "U1"
+
+
+def test_pastilles_rails_nommes_et_bien_placees():
+    """Seuls les rails nommés (3V3, VCC…) deviennent des pastilles ; elles ne se chevauchent pas
+    et restent au-dessus du bloc, sans recouvrir son titre."""
+    from easynoptique.layout import layout_functional
+
+    fps = [
+        FakeFootprint("U1", "STM32F405", "mcu", [
+            FakePad("1", "+3V3", "VDD", "power_in"), FakePad("2", "Net-(U1-VCAP_1)", "VCAP_1", "power_in"),
+            FakePad("3", "/SDA", "I2C1_SDA", "bidirectional"),
+        ]),
+        FakeFootprint("C1", "2u2", "mcu", [FakePad("1", "Net-(U1-VCAP_1)"), FakePad("2", "GND")]),
+        FakeFootprint("U2", "BMP581", "capteurs", [FakePad("1", "+3V3", "VDD", "power_in"),
+                                                    FakePad("2", "+3V3_radio", "VDDIO", "power_in"),
+                                                    FakePad("3", "VCC", "VS", "power_in"), FakePad("4", "/SDA", "SDA")]),
+        FakeFootprint("U3", "LDO", "alim", [FakePad("1", "VCC", "VIN", "power_in"), FakePad("2", "+3V3", "VOUT", "power_out")]),
+        FakeFootprint("U4", "LDO", "alim", [FakePad("1", "VCC", "VIN", "power_in"), FakePad("2", "+3V3_radio", "VOUT", "power_out")]),
+    ]
+    syn = analyze(netlist_from_board(FakeBoard(fps)))
+    assert not any("Net-(" in r for r in syn.rails)
+    assert all("Net-(" not in r for b in syn.blocks for r in b.rails)
+    scene = layout_functional(syn)
+    for blk in syn.blocks:
+        group = next(s for s in scene.shapes if s.id == f"blk-{blk.id}")
+        badges = sorted((s for s in scene.shapes if s.kind == "badge" and s.id.startswith(group.id + "-")), key=lambda s: s.x)
+        for a, b in zip(badges, badges[1:]):
+            assert a.x + a.w <= b.x  # pas de chevauchement
+        for s in badges:
+            assert s.y + s.h <= group.y  # au-dessus du bloc, donc pas sur le titre

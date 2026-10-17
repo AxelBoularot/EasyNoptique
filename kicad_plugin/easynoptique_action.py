@@ -36,6 +36,10 @@ class EasyNoptiquePlugin(pcbnew.ActionPlugin):
 
     def Run(self):
         try:
+            # KiCad garde les modules en mémoire : on les recharge pour utiliser la version installée
+            for name in [m for m in sys.modules if m == "easynoptique" or m.startswith("easynoptique.")]:
+                del sys.modules[name]
+            from easynoptique import __version__
             from easynoptique.cli import generate_from_netlist
             from easynoptique.kicad_board import netlist_from_board
             from easynoptique.rules import Rules
@@ -62,7 +66,7 @@ class EasyNoptiquePlugin(pcbnew.ActionPlugin):
             html = written.get("html")
             if html:
                 webbrowser.open(html.resolve().as_uri())
-            _message(f"Synoptique généré dans :\n{out}\n\n"
+            _message(f"EasyNoptique {__version__}\n\nSynoptique généré dans :\n{out}\n\n"
                      f"Fichiers : {', '.join(sorted(p.name for p in written.values()))}")
         except Exception:
             _message("Erreur pendant la génération du synoptique :\n\n" + traceback.format_exc(), error=True)
