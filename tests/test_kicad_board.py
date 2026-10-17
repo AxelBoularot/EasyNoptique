@@ -157,3 +157,22 @@ def test_plugin_depuis_le_zip(tmp_path, monkeypatch):
     registered[0].Run()
     out = tmp_path / "synoptique"
     assert (out / "carte-test.html").exists() and (out / "carte-test.drawio").exists()
+
+
+def test_metadonnees_conformes_au_schema_kicad():
+    """Le gestionnaire de plugins de KiCad refuse un paquet dont metadata.json ne respecte pas son schéma."""
+    import json
+    import sys
+    from pathlib import Path
+
+    import pytest
+
+    jsonschema = pytest.importorskip("jsonschema")
+    root = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root / "tools"))
+    import build_pcm
+
+    schema = json.loads((root / "tests" / "fixtures" / "pcm.v1.schema.json").read_text(encoding="utf-8"))
+    validator = jsonschema.Draft7Validator({**schema, "$ref": "#/definitions/Package"})
+    errors = [f"{list(e.path)}: {e.message}" for e in validator.iter_errors(build_pcm.METADATA)]
+    assert errors == []

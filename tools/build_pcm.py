@@ -30,7 +30,7 @@ METADATA = {
     "author": {"name": "Axel Boularot", "contact": {"github": "https://github.com/AxelBoularot"}},
     "license": "MIT",
     "resources": {"homepage": "https://github.com/AxelBoularot/EasyNoptique"},
-    "tags": ["documentation", "diagram", "synoptique", "block diagram"],
+    "tags": ["documentation", "diagram", "synoptique", "block-diagram"],
     "versions": [{"version": __version__, "status": "testing", "kicad_version": "6.0"}],
 }
 

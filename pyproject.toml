@@ -13,7 +13,7 @@ dependencies = ["pyyaml>=5.4"]
 keywords = ["kicad", "synoptique", "block diagram", "drawio", "electronics"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "ruff>=0.4"]
+dev = ["pytest>=7", "ruff>=0.4", "jsonschema>=4"]
 
 [project.scripts]
 easynoptique = "easynoptique.cli:main"
