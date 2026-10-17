@@ -125,12 +125,27 @@ CATEGORY_RULES = [
 ]
 
 
+# Connecteurs : masqués par défaut (règle « connecteurs: true » pour les afficher)
+CONNECTOR_PREFIXES = {"J", "P", "CN", "CON", "CONN", "JP"}
+_excluded: set[str] = set()
+
+
 def _is_ignored(c: Component) -> bool:
-    return c.prefix in IGNORED_PREFIXES or c.ref.startswith("#")
+    return c.prefix in IGNORED_PREFIXES or c.prefix in _excluded or c.ref.startswith("#")
 
 
 def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
     rules = rules or Rules()
+    global _excluded
+    previous = _excluded
+    _excluded = set() if rules.connectors else set(CONNECTOR_PREFIXES)
+    try:
+        return _analyze(nl, rules)
+    finally:
+        _excluded = previous
+
+
+def _analyze(nl: Netlist, rules: Rules) -> Synoptic:
     comps = nl.components
     syn = Synoptic(project=nl.project_name, title=nl.title or nl.project_name, rev=nl.rev, date=nl.date, company=nl.company)
 
@@ -315,7 +330,8 @@ def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
             for r in outs:
                 producers[r].append(ref)
     for ref, c in comps.items():
-        if ref in power_nodes or c.ref.startswith("#") or _is_ignored(c) or c.prefix not in SOURCE_PREFIXES:
+        # Les connecteurs restent des sources d'énergie dans l'arbre d'alimentation, même masqués ailleurs
+        if ref in power_nodes or c.ref.startswith("#") or c.prefix not in SOURCE_PREFIXES:
             continue
         srails = sorted({r for r, ps in rail_pins.items() for p in ps if p.ref == ref and p.type in ("passive", "power_out", "")})
         srails = [r for r in srails if not producers.get(r) or SOURCE_RAIL_RE.search(r) or c.prefix == "BT"]
@@ -368,8 +384,10 @@ def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
         cat = conf.get("category") or _category(bid, name, [comps[r] for r in refs], hub, power_nodes)
         syn.blocks.append(Block(id=bid, name=name, category=cat, sheet=block_sheet.get(bid, ""), items=items,
                                 components=refs, rails=badges.get(bid, []), hidden=bool(conf.get("hide"))))
-    hidden = {b.id for b in syn.blocks if b.hidden}
-    syn.links = [lk for lk in syn.links if lk.a not in hidden and lk.b not in hidden]
+    # Blocs vides (par exemple faits uniquement de connecteurs masqués) : retirés
+    syn.blocks = [b for b in syn.blocks if b.items or b.id == hub]
+    kept = {b.id for b in syn.blocks if not b.hidden}
+    syn.links = [lk for lk in syn.links if lk.a in kept and lk.b in kept]
 
     # --- 8. Bus (vue bus) --------------------------------------------------------
     syn.buses = _buses(syn, groups, comps, comp_block, hub, kind_of, net_by_name)

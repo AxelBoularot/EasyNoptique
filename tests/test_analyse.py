@@ -31,7 +31,7 @@ def test_lecture_netlist():
 def test_blocs_et_hub(syn):
     assert syn.hub == "mcu"
     cats = {b.id: b.category for b in syn.blocks}
-    assert cats == {"mcu": "hub", "alim": "power", "capteurs": "sensors", "debug": "debug",
+    assert cats == {"mcu": "hub", "alim": "power", "capteurs": "sensors",
                     "ihm": "hmi", "memoire": "memory", "usb": "interface"}
 
 
@@ -40,7 +40,19 @@ def test_bus_detectes(syn):
     spi = links(syn, "mcu", "memoire")["SPI1"]
     assert spi.width == 4 and "FLASH_CS" in spi.nets  # CS rattaché par son nom de net
     assert links(syn, "mcu", "usb")["USB"].direction == "both"
-    dbg = links(syn, "mcu", "debug")
+
+
+def test_connecteurs_masques_par_defaut(syn):
+    refs = {it.ref for b in syn.blocks for it in b.items}
+    assert not refs & {"J1", "J2", "J3"}
+    assert all("debug" not in (lk.a, lk.b) for lk in syn.links)  # bloc fait d'un seul connecteur : retiré
+    assert {p.ref for p in syn.power if p.role == "source"} == {"J1", "J2"}  # restent sources d'énergie
+
+
+def test_connecteurs_affiches_sur_demande():
+    s2 = analyze(parse_netlist(FIXTURE), Rules(connectors=True))
+    assert "J3" in {it.ref for b in s2.blocks for it in b.items}
+    dbg = links(s2, "mcu", "debug")
     assert dbg["SWD"].width == 3
     assert set(dbg["UART2"].nets) == {"UART_RX", "UART_TX"}  # fusion à travers R10 (33 Ω série)
 
@@ -70,9 +82,11 @@ def test_vue_bus(syn):
 
 def test_regles(tmp_path, syn):
     f = tmp_path / "r.yaml"
-    f.write_text("blocks:\n  debug: {hide: true}\n  capteurs: {name: Environnement}\nnets:\n  BTN1: gpio\n", encoding="utf-8")
+    f.write_text("connecteurs: true\nblocks:\n  debug: {hide: true}\n  capteurs: {name: Environnement}\nnets:\n  BTN1: gpio\n",
+                 encoding="utf-8")
     s2 = analyze(parse_netlist(FIXTURE), Rules.load(f))
-    assert all("debug" not in (lk.a, lk.b) for lk in s2.links)
+    assert s2.block("debug").items  # connecteurs affichés…
+    assert all("debug" not in (lk.a, lk.b) for lk in s2.links)  # … mais bloc masqué
     assert s2.block("capteurs").name == "Environnement"
 
 

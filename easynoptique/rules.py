@@ -11,6 +11,7 @@ Exemple ::
     nets:
       FLASH_CS: spi             # force le type de bus d'un net
     ignore_nets: [NRST]
+    connecteurs: true           # affiche les connecteurs (masqués par défaut)
 """
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ class Rules:
     blocks: dict[str, dict] = field(default_factory=dict)
     nets: dict[str, str] = field(default_factory=dict)
     ignore_nets: list[str] = field(default_factory=list)
+    connectors: bool = False  # afficher les connecteurs (J, P, CN…) dans les synoptiques
 
     @classmethod
     def load(cls, path: str | Path | None) -> Rules:
@@ -44,6 +46,7 @@ class Rules:
             blocks={str(k): dict(v or {}) for k, v in (data.get("blocks") or {}).items()},
             nets={str(k): str(v).lower() for k, v in (data.get("nets") or {}).items()},
             ignore_nets=[str(x) for x in (data.get("ignore_nets") or [])],
+            connectors=bool(data.get("connecteurs", data.get("connectors", False))),
         )
 
     @staticmethod

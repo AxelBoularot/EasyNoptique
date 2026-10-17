@@ -80,7 +80,12 @@ blocks:
 nets:
   FLASH_CS: spi               # force le type de bus
 ignore_nets: [NRST]
+connecteurs: true             # affiche les connecteurs (masqués par défaut)
 ```
+
+Par défaut, les **connecteurs** (références `J`, `P`, `CN`…) sont retirés des synoptiques ; un bloc qui ne
+contient que des connecteurs disparaît. Ils restent affichés comme **sources d'énergie** dans l'arbre
+d'alimentation (prise USB, batterie…).
 
 ## Conventions de dessin
 

@@ -38,11 +38,6 @@
       "sheet": "alim.kicad_sch",
       "items": [
         {
-          "ref": "J2",
-          "value": "Conn_01x02 LiPo",
-          "description": "Battery connector JST-PH"
-        },
-        {
           "ref": "U2",
           "value": "MCP73831-2-OT",
           "description": "Single cell, Li-Ion/Li-Po charge management controller"
@@ -106,25 +101,6 @@
       "hidden": false
     },
     {
-      "id": "debug",
-      "name": "Debug",
-      "category": "debug",
-      "sheet": "debug.kicad_sch",
-      "items": [
-        {
-          "ref": "J3",
-          "value": "Tag-Connect_TC2050",
-          "description": "Tag-Connect TC2050 SWD + UART"
-        }
-      ],
-      "components": [
-        "J3",
-        "R10"
-      ],
-      "rails": [],
-      "hidden": false
-    },
-    {
       "id": "ihm",
       "name": "IHM",
       "category": "hmi",
@@ -183,11 +159,6 @@
       "category": "interface",
       "sheet": "usb.kicad_sch",
       "items": [
-        {
-          "ref": "J1",
-          "value": "USB_C_Receptacle_USB2.0",
-          "description": "USB 2.0-only Type-C Receptacle connector"
-        },
         {
           "ref": "U5",
           "value": "USBLC6-2SC6",
@@ -314,35 +285,6 @@
         "CTN"
       ],
       "direction": "ba",
-      "note": ""
-    },
-    {
-      "id": "L9",
-      "a": "mcu",
-      "b": "debug",
-      "kind": "swd",
-      "label": "SWD",
-      "instance": "",
-      "nets": [
-        "NRST",
-        "SWCLK",
-        "SWDIO"
-      ],
-      "direction": "ab",
-      "note": ""
-    },
-    {
-      "id": "L10",
-      "a": "mcu",
-      "b": "debug",
-      "kind": "uart",
-      "label": "UART2",
-      "instance": "2",
-      "nets": [
-        "UART_RX",
-        "UART_TX"
-      ],
-      "direction": "both",
       "note": ""
     },
     {
@@ -519,12 +461,6 @@
       ],
       "devices": [
         {
-          "ref": "J1",
-          "value": "USB_C_Receptacle_USB2.0",
-          "block": "usb",
-          "address": ""
-        },
-        {
           "ref": "U5",
           "value": "USBLC6-2SC6",
           "block": "usb",
@@ -577,45 +513,6 @@
           "ref": "U8",
           "value": "W25Q32JVSS",
           "block": "memoire",
-          "address": ""
-        }
-      ],
-      "pullups": []
-    },
-    {
-      "kind": "uart",
-      "instance": "2",
-      "label": "UART2",
-      "master": "U1",
-      "nets": [
-        "UART_RX",
-        "UART_TX"
-      ],
-      "devices": [
-        {
-          "ref": "J3",
-          "value": "Tag-Connect_TC2050",
-          "block": "debug",
-          "address": ""
-        }
-      ],
-      "pullups": []
-    },
-    {
-      "kind": "swd",
-      "instance": "",
-      "label": "SWD",
-      "master": "U1",
-      "nets": [
-        "NRST",
-        "SWCLK",
-        "SWDIO"
-      ],
-      "devices": [
-        {
-          "ref": "J3",
-          "value": "Tag-Connect_TC2050",
-          "block": "debug",
           "address": ""
         }
       ],
