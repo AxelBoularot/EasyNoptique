@@ -184,8 +184,8 @@ def place_label(points, label: str, n_wires: int, left: bool = False) -> tuple[t
 # ----------------------------------------------------------------------------- éléments communs
 
 
-def block_rect_size(b: Block, is_hub: bool) -> tuple[float, float]:
-    n = min(len(b.items), MAX_ITEMS + 1)
+def block_rect_size(b: Block, is_hub: bool, detailed: bool = False) -> tuple[float, float]:
+    n = len(b.items) if detailed else min(len(b.items), MAX_ITEMS + 1)
     if is_hub and len(b.items) <= 1:
         return 210, 100
     n = max(1, n)
@@ -197,19 +197,20 @@ def draw_block(scene: Scene, b: Block, r: Rect, is_hub: bool, detailed: bool) ->
     if is_hub and len(b.items) <= 1:
         it = b.items[0] if b.items else None
         scene.add(Shape(r.sid, "box", r.x, r.y, r.w, r.h, label=short(it.value if it else b.name, 24),
-                        sub=(it.ref if it and detailed else ""), fill="#ffffff", stroke="#000000", bold=True,
+                        sub=(it.ref if it else ""), fill="#ffffff", stroke="#000000", bold=True,
                         font=15, block=b.id, z=3))
     else:
         scene.add(Shape(r.sid, "group", r.x, r.y, r.w, r.h, label=b.name.upper(), fill=fill, stroke=stroke,
                         align="topleft", font=9.5, bold=True, text_color=stroke, block=b.id, z=1))
-        items = b.items[:MAX_ITEMS]
-        extra = len(b.items) - MAX_ITEMS
+        limit = len(b.items) if detailed else MAX_ITEMS
+        items = b.items[:limit]
+        extra = len(b.items) - limit
         for i, it in enumerate(items):
             y = r.y + HEAD + i * (ITEM_H + ITEM_GAP)
             scene.add(Shape(f"{r.sid}-{it.ref}", "box", r.x + 10, y, r.w - 20, ITEM_H, label=short(it.value),
-                            sub=it.ref if detailed else "", block=b.id, z=3))
+                            sub=it.ref, block=b.id, z=3))
         if extra > 0:
-            y = r.y + HEAD + MAX_ITEMS * (ITEM_H + ITEM_GAP)
+            y = r.y + HEAD + limit * (ITEM_H + ITEM_GAP)
             scene.add(Shape(f"{r.sid}-more", "box", r.x + 10, y, r.w - 20, ITEM_H, label=f"+ {extra} autres",
                             stroke=stroke, dashed=True, block=b.id, z=3))
     for k, rail in enumerate(b.rails):
@@ -326,9 +327,9 @@ def layout_functional(syn: Synoptic, detailed: bool = False) -> Scene:
     gap_l = max(130, 60 + 20 * count("L", "H"))
     gap_r = max(130, 60 + 20 * count("H", "R"))
     outer_l = 30 + 14 * n_ll
-    hub_w, hub_h = block_rect_size(by_id[hub], True)
+    hub_w, hub_h = block_rect_size(by_id[hub], True, detailed)
 
-    sizes = {b.id: block_rect_size(b, False) for b in left + right}
+    sizes = {b.id: block_rect_size(b, False, detailed) for b in left + right}
     col_h = lambda bs: sum(sizes[b.id][1] for b in bs) + 34 * max(0, len(bs) - 1)
     hub_h = max(hub_h, 30 + 22 * (count("L", "H") + count("H", "R")) // 2)
     total_h = max(col_h(left), col_h(right), hub_h)
@@ -359,7 +360,7 @@ def layout_functional(syn: Synoptic, detailed: bool = False) -> Scene:
         r = rects[b.id]
         if col[b.id] == "B":
             _, fill, stroke = CATEGORIES.get(b.category, CATEGORIES["other"])
-            detail = ", ".join((f"{it.ref} " if detailed else "") + short(it.value, 26) for it in b.items[:4])
+            detail = ", ".join(f"{it.ref} {short(it.value, 26)}" for it in b.items[:4])
             scene.add(Shape(r.sid, "bar", r.x, r.y, r.w, r.h, label=f"{b.name} : {detail}" if detail else b.name,
                             fill=fill, stroke=stroke, block=b.id, z=3))
             for k, rail in enumerate(b.rails):

@@ -18,7 +18,7 @@ SOURCE_RAIL_RE = re.compile(r"VBUS|VBAT|BAT|VIN|VEXT|VDC|DC_?IN|USB|PWR_?IN|^\+?
 GROUND_RE = re.compile(r"^(A|D|P|S|C|E)?GND\w*$|^VSS\w*$|^0V$|^EARTH$|^GNDREF$|^GND_\w+$", re.IGNORECASE)
 POWER_RE = re.compile(
     r"^[+-]\d|^\d+V\d*\w*$|^\+|^V(CC|DD|BUS|BAT|IN|SYS|CORE|IO|DDA|DDIO|REF|USB|PP|MAIN|SUPPLY|EXT|LED|MOT)\w*$|"
-    r"^(VBAT|VSYS|VBUS|VIN|BAT\+?)$",
+    r"^(VBAT|VSYS|VBUS|VIN|BAT\+?)$|(^|_)\d+V\d*($|_)|^\d+[.,]\d+V$|^V_(BAT|BUS|IN|SYS|CC|DD|MAIN)\w*$|^(PWR|POWER)_",
     re.IGNORECASE,
 )
 
@@ -125,12 +125,37 @@ CATEGORY_RULES = [
 ]
 
 
+# Noms de broches d'alimentation (secours quand les types de broches du symbole sont faux)
+IN_PIN_RE = re.compile(r"^(V_?IN\d*|IN\d*|VI|PVIN\d*|AVIN|VBUS|VSUP|VS|VCC|VDD|VBATT?)$", re.I)
+OUT_PIN_RE = re.compile(r"^(V_?OUT\d*|OUT\d*|VO|OUTPUT|VREG\w*|VSYS|VBAT_?OUT)$", re.I)
+LOAD_PIN_RE = re.compile(r"^(\d+([.,]\d+)?V\d*|V(CC|DD)\w*|[AD]VDD\w*|IOVDD|VDDIO\w*|VCCIO\w*|VIN|VBAT|VS|V\+|VLOGIC|VIO)$", re.I)
+
+
+def _pin_name(p) -> str:
+    return (p.function or "").split("/")[0].replace("~{", "").replace("}", "").strip()
+
+
+# Connecteurs : masqués par défaut (règle « connecteurs: true » pour les afficher)
+CONNECTOR_PREFIXES = {"J", "P", "CN", "CON", "CONN", "JP"}
+_excluded: set[str] = set()
+
+
 def _is_ignored(c: Component) -> bool:
-    return c.prefix in IGNORED_PREFIXES or c.ref.startswith("#")
+    return c.prefix in IGNORED_PREFIXES or c.prefix in _excluded or c.ref.startswith("#")
 
 
 def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
     rules = rules or Rules()
+    global _excluded
+    previous = _excluded
+    _excluded = set() if rules.connectors else set(CONNECTOR_PREFIXES)
+    try:
+        return _analyze(nl, rules)
+    finally:
+        _excluded = previous
+
+
+def _analyze(nl: Netlist, rules: Rules) -> Synoptic:
     comps = nl.components
     syn = Synoptic(project=nl.project_name, title=nl.title or nl.project_name, rev=nl.rev, date=nl.date, company=nl.company)
 
@@ -298,11 +323,15 @@ def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
 
     power_nodes: dict[str, PowerNode] = {}
     producers: dict[str, list[str]] = defaultdict(list)
+
+    def _rails_of(ref: str, test) -> list[str]:
+        return sorted({r for r, ps in rail_pins.items() for p in ps if p.ref == ref and test(p)})
+
     for ref, c in comps.items():
         if c.ref.startswith("#") or _is_ignored(c):
             continue
-        ins = sorted({r for r, ps in rail_pins.items() for p in ps if p.ref == ref and p.type in ("power_in", "input")})
-        outs = sorted({r for r, ps in rail_pins.items() for p in ps if p.ref == ref and p.type == "power_out"})
+        outs = _rails_of(ref, lambda p: p.type == "power_out" or bool(OUT_PIN_RE.match(_pin_name(p))))
+        ins = _rails_of(ref, lambda p: p.type in ("power_in", "input") or bool(IN_PIN_RE.match(_pin_name(p))))
         ins = [r for r in ins if r not in outs]
         cur = parse_current(c.field("EN_Courant", "Courant", "Current", "I_typ"))
         imax = parse_current(c.field("EN_Imax", "Imax", "I_max"))
@@ -310,14 +339,15 @@ def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
             power_nodes[ref] = PowerNode(ref, c.value, "converter", comp_block.get(ref, ""), ins, outs, cur, imax)
             for r in outs:
                 producers[r].append(ref)
-        elif outs:
+        elif outs and any(p.type == "power_out" for ps in rail_pins.values() for p in ps if p.ref == ref):
             power_nodes[ref] = PowerNode(ref, c.value, "source", comp_block.get(ref, ""), [], outs, cur, imax)
             for r in outs:
                 producers[r].append(ref)
     for ref, c in comps.items():
-        if ref in power_nodes or c.ref.startswith("#") or _is_ignored(c) or c.prefix not in SOURCE_PREFIXES:
+        # Les connecteurs restent des sources d'énergie dans l'arbre d'alimentation, même masqués ailleurs
+        if ref in power_nodes or c.ref.startswith("#") or c.prefix not in SOURCE_PREFIXES:
             continue
-        srails = sorted({r for r, ps in rail_pins.items() for p in ps if p.ref == ref and p.type in ("passive", "power_out", "")})
+        srails = _rails_of(ref, lambda p: p.type in ("passive", "power_out", ""))
         srails = [r for r in srails if not producers.get(r) or SOURCE_RAIL_RE.search(r) or c.prefix == "BT"]
         if srails:
             power_nodes[ref] = PowerNode(ref, c.value, "source", comp_block.get(ref, ""), [], srails)
@@ -326,13 +356,14 @@ def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
     for ref, c in comps.items():
         if ref in power_nodes or c.ref.startswith("#") or _is_ignored(c):
             continue
-        lrails = sorted({r for r, ps in rail_pins.items() for p in ps if p.ref == ref and p.type == "power_in"})
+        lrails = _rails_of(ref, lambda p: p.type == "power_in" or bool(LOAD_PIN_RE.match(_pin_name(p))))
         if lrails:
             cur = parse_current(c.field("EN_Courant", "Courant", "Current", "I_typ"))
             power_nodes[ref] = PowerNode(ref, c.value, "load", comp_block.get(ref, ""), lrails, [], cur)
     syn.power = list(power_nodes.values())
 
-    # Liaisons d'alimentation entre blocs (ou pastilles si le rail dessert plus de 2 blocs)
+    # Alimentation dans les synoptiques : flèche depuis le bloc qui produit le rail ;
+    # si le rail dessert plus de 2 blocs, flèche vers le hub seulement et pastille sur les autres blocs.
     badges: dict[str, list[str]] = {}
     for rail in rails:
         prod_blocks = []
@@ -344,17 +375,17 @@ def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
         for pn in power_nodes.values():
             if rail in pn.inputs and pn.block and pn.block not in prod_blocks and pn.block not in cons_blocks:
                 cons_blocks.append(pn.block)
-        if not prod_blocks or not cons_blocks:
+        if not cons_blocks:
             continue
-        if len(cons_blocks) > 2:
-            for b in cons_blocks:
-                badges.setdefault(b, [])
-                if rail not in badges[b]:
-                    badges[b].append(rail)
-            continue
-        for pb in prod_blocks[:1]:
-            for cb in cons_blocks:
-                links.append(Link(id=f"L{len(links) + 1}", a=pb, b=cb, kind="power", label=rail, nets=[rail], direction="ab"))
+        arrows_to = []
+        if prod_blocks:
+            arrows_to = cons_blocks if len(cons_blocks) <= 2 else [b for b in cons_blocks if b == hub]
+            for cb in arrows_to:
+                links.append(Link(id=f"L{len(links) + 1}", a=prod_blocks[0], b=cb, kind="power", label=rail,
+                                  nets=[rail], direction="ab"))
+        for b in cons_blocks:
+            if b not in arrows_to and rail not in badges.setdefault(b, []):
+                badges[b].append(rail)
 
     syn.links = links
 
@@ -368,8 +399,10 @@ def analyze(nl: Netlist, rules: Rules | None = None) -> Synoptic:
         cat = conf.get("category") or _category(bid, name, [comps[r] for r in refs], hub, power_nodes)
         syn.blocks.append(Block(id=bid, name=name, category=cat, sheet=block_sheet.get(bid, ""), items=items,
                                 components=refs, rails=badges.get(bid, []), hidden=bool(conf.get("hide"))))
-    hidden = {b.id for b in syn.blocks if b.hidden}
-    syn.links = [lk for lk in syn.links if lk.a not in hidden and lk.b not in hidden]
+    # Blocs vides (par exemple faits uniquement de connecteurs masqués) : retirés
+    syn.blocks = [b for b in syn.blocks if b.items or b.id == hub]
+    kept = {b.id for b in syn.blocks if not b.hidden}
+    syn.links = [lk for lk in syn.links if lk.a in kept and lk.b in kept]
 
     # --- 8. Bus (vue bus) --------------------------------------------------------
     syn.buses = _buses(syn, groups, comps, comp_block, hub, kind_of, net_by_name)
