@@ -55,7 +55,7 @@ def generate_from_netlist(nl, out: Path, rules: Rules | None = None, formats=("s
         written["drawio"] = p
     if "html" in formats:
         p = out / f"{stem}.html"
-        p.write_text(render_report(syn, scenes), encoding="utf-8")
+        p.write_text(render_report(syn, scenes, stem), encoding="utf-8")
         written["html"] = p
     if "json" in formats:
         p = out / f"{stem}.json"

@@ -176,3 +176,33 @@ def test_metadonnees_conformes_au_schema_kicad():
     validator = jsonschema.Draft7Validator({**schema, "$ref": "#/definitions/Package"})
     errors = [f"{list(e.path)}: {e.message}" for e in validator.iter_errors(build_pcm.METADATA)]
     assert errors == []
+
+
+def test_regulateur_mal_type_et_alims_visibles():
+    """Régulateur dont toutes les broches sont 'passive' (symbole mal typé) : reconnu par les noms de broches.
+    Le MCU reçoit une flèche d'alimentation, les autres blocs une pastille, et sa référence est affichée."""
+    from easynoptique.layout import layout_functional
+
+    fps = [
+        FakeFootprint("U1", "STM32H745", "mcu", [
+            FakePad("1", "/3V3", "VDD", "passive"), FakePad("2", "GND", "VSS", "passive"),
+            FakePad("3", "/SDA", "I2C1_SDA", "bidirectional"), FakePad("4", "/SCL", "I2C1_SCL", "bidirectional"),
+            FakePad("5", "/MOSI", "SPI1_MOSI", "bidirectional"), FakePad("6", "/TX", "USART1_TX", "bidirectional"),
+        ]),
+        FakeFootprint("U2", "BMP280", "capteurs", [FakePad("1", "/3V3", "VDD", "passive"), FakePad("3", "/SDA", "SDI"),
+                                                   FakePad("4", "/SCL", "SCK")]),
+        FakeFootprint("U4", "RFM95W", "radio", [FakePad("1", "/3V3", "3.3V", "passive"), FakePad("2", "/MOSI", "MOSI")]),
+        FakeFootprint("U5", "SAM-M10Q", "gnss", [FakePad("1", "/3V3", "VCC", "passive"), FakePad("2", "/TX", "RXD")]),
+        FakeFootprint("U3", "LDO 3V3", "alim", [FakePad("1", "/VIN_5V", "VIN", "passive"),
+                                               FakePad("2", "GND", "GND", "passive"),
+                                               FakePad("3", "/3V3", "VOUT", "passive")]),
+        FakeFootprint("J1", "USB_C", "alim", [FakePad("A4", "/VIN_5V", "VBUS"), FakePad("A1", "GND", "GND")]),
+    ]
+    syn = analyze(netlist_from_board(FakeBoard(fps)))
+    ldo = next(p for p in syn.power if p.ref == "U3")
+    assert (ldo.role, ldo.inputs, ldo.outputs) == ("converter", ["VIN_5V"], ["3V3"])
+    assert any(lk.kind == "power" and (lk.a, lk.b, lk.label) == ("alim", "mcu", "3V3") for lk in syn.links)
+    assert all(syn.block(b).rails == ["3V3"] for b in ("capteurs", "radio", "gnss"))
+    scene = layout_functional(syn)
+    hub_box = next(s for s in scene.shapes if s.block == "mcu" and s.kind == "box")
+    assert hub_box.sub == "U1"

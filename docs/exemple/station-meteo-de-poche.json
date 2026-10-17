@@ -26,9 +26,7 @@
         "U1",
         "Y1"
       ],
-      "rails": [
-        "+3V3"
-      ],
+      "rails": [],
       "hidden": false
     },
     {
@@ -289,6 +287,19 @@
     },
     {
       "id": "L11",
+      "a": "alim",
+      "b": "mcu",
+      "kind": "power",
+      "label": "+3V3",
+      "instance": "",
+      "nets": [
+        "+3V3"
+      ],
+      "direction": "ab",
+      "note": ""
+    },
+    {
+      "id": "L12",
       "a": "usb",
       "b": "alim",
       "kind": "power",

@@ -5,6 +5,7 @@ import json
 from html import escape
 
 from .model import CATEGORIES, LINK_KINDS, Synoptic
+from .render_drawio import render_drawio
 from .render_svg import render_svg
 from .scene import Scene
 
@@ -27,12 +28,15 @@ h1{font-size:26px;margin:0}h2{font-size:17px;margin:0 0 8px}.muted{color:var(--m
 table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}code{font-size:12px}
 .warn li{margin:4px 0}.ok{color:#3f8a1f;font-weight:600}
+.exp{margin-left:auto;display:inline-flex;gap:6px;align-items:center}
+.exp button{font:600 12px system-ui;padding:4px 10px;border:1px solid var(--rule);border-radius:5px;background:var(--bg);color:var(--ink);cursor:pointer}
+.exp button:hover{border-color:var(--accent)}
 .blk{cursor:pointer}.blk:hover rect{stroke:#1d67c9;stroke-width:2.5}
 #detail ul{margin:6px 0 0;padding-left:18px}
 """
 
 
-def render_report(syn: Synoptic, scenes: dict[str, Scene]) -> str:
+def render_report(syn: Synoptic, scenes: dict[str, Scene], stem: str = "synoptique") -> str:
     names = {"fonctionnel": "Fonctionnelle", "complet": "Complète", "alimentation": "Alimentation", "bus": "Bus"}
     tabs, views = [], []
     for i, (key, sc) in enumerate(scenes.items()):
@@ -40,7 +44,10 @@ def render_report(syn: Synoptic, scenes: dict[str, Scene]) -> str:
                     f'{escape(names.get(key, key))}</button>')
         kinds = sorted({e.kind for e in sc.edges if e.kind != "legend"}, key=lambda k: list(LINK_KINDS).index(k) if k in LINK_KINDS else 99)
         boxes = "".join(f'<label><input type="checkbox" checked data-kind="{k}"> {escape(LINK_KINDS.get(k, k))}</label>' for k in kinds)
-        views.append(f'<section class="view" data-view="{key}"{"" if i == 0 else " hidden"}><div class="bar"><b>Calques</b>{boxes}</div>'
+        views.append(f'<section class="view" data-view="{key}"{"" if i == 0 else " hidden"}><div class="bar"><b>Calques</b>{boxes}'
+                     f'<span class="exp"><b>Exporter</b><button type="button" data-exp="svg">SVG</button>'
+                     f'<button type="button" data-exp="png">PNG</button><button type="button" data-exp="drawio">draw.io</button>'
+                     f'</span></div>'
                      f'<div class="canvas">{render_svg(sc, "svg-" + key)}</div></section>')
 
     names_of = {b.id: b.name for b in syn.blocks}
@@ -59,6 +66,32 @@ def render_report(syn: Synoptic, scenes: dict[str, Scene]) -> str:
                    "items": [f"{it.ref} — {it.value}" for it in b.items], "rails": b.rails} for b in syn.blocks}
     script = """
 const DATA = %s;
+const DRAWIO = %s;
+const STEM = %s;
+function save(name, blob) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function svgText(svg) {  // exporte ce qui est affiché (calques masqués compris)
+  const clone = svg.cloneNode(true);
+  clone.querySelectorAll('[style*="display: none"]').forEach(n => n.remove());
+  return '<?xml version="1.0" encoding="UTF-8"?>\\n' + new XMLSerializer().serializeToString(clone);
+}
+document.querySelectorAll('.view').forEach(v => v.querySelectorAll('[data-exp]').forEach(btn => btn.addEventListener('click', () => {
+  const svg = v.querySelector('svg'), name = STEM + '-' + v.dataset.view, kind = btn.dataset.exp;
+  if (kind === 'drawio') return save(STEM + '.drawio', new Blob([DRAWIO], {type: 'application/xml'}));
+  const text = svgText(svg);
+  if (kind === 'svg') return save(name + '.svg', new Blob([text], {type: 'image/svg+xml'}));
+  const img = new Image(), scale = 2;
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = svg.viewBox.baseVal.width * scale; c.height = svg.viewBox.baseVal.height * scale;
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    c.toBlob(b => save(name + '.png', b), 'image/png');
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(text);
+})));
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
   document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
   document.querySelectorAll('.view').forEach(v => v.hidden = v.dataset.view !== t.dataset.view);
@@ -74,7 +107,8 @@ document.querySelectorAll('.blk').forEach(g => g.addEventListener('click', () =>
   el.querySelector('p').textContent = b.category + (b.sheet ? ' · feuille ' + b.sheet : '') + (b.rails.length ? ' · alimenté par ' + b.rails.join(', ') : '');
   const ul = el.querySelector('ul'); b.items.forEach(i => { const li = document.createElement('li'); li.textContent = i; ul.appendChild(li); });
 }));
-""" % json.dumps(data, ensure_ascii=False)
+""" % (json.dumps(data, ensure_ascii=False), json.dumps(render_drawio(list(scenes.values()))).replace("</", "<\\/"),
+       json.dumps(stem))
     title = escape(syn.title or syn.project)
     return f"""<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title} · EasyNoptique</title><style>{CSS}</style></head><body><main>
