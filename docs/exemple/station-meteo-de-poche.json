@@ -1,0 +1,680 @@
+{
+  "project": "Station météo de poche",
+  "title": "Station météo de poche",
+  "rev": "A",
+  "date": "2026-10-17",
+  "company": "EasyNoptique",
+  "hub": "mcu",
+  "blocks": [
+    {
+      "id": "mcu",
+      "name": "MCU",
+      "category": "hub",
+      "sheet": "mcu.kicad_sch",
+      "items": [
+        {
+          "ref": "U1",
+          "value": "STM32L432KCUx",
+          "description": "STMicroelectronics Arm Cortex-M4 MCU, 256KB flash, 64KB RAM, 80 MHz"
+        }
+      ],
+      "components": [
+        "C10",
+        "C11",
+        "R5",
+        "R6",
+        "U1",
+        "Y1"
+      ],
+      "rails": [
+        "+3V3"
+      ],
+      "hidden": false
+    },
+    {
+      "id": "alim",
+      "name": "Alimentation",
+      "category": "power",
+      "sheet": "alim.kicad_sch",
+      "items": [
+        {
+          "ref": "J2",
+          "value": "Conn_01x02 LiPo",
+          "description": "Battery connector JST-PH"
+        },
+        {
+          "ref": "U2",
+          "value": "MCP73831-2-OT",
+          "description": "Single cell, Li-Ion/Li-Po charge management controller"
+        },
+        {
+          "ref": "U3",
+          "value": "LM66100",
+          "description": "Ideal diode, 1.5A"
+        },
+        {
+          "ref": "U4",
+          "value": "AP2112K-3.3",
+          "description": "600mA low dropout linear regulator, 3.3V"
+        },
+        {
+          "ref": "U9",
+          "value": "LM66100",
+          "description": "Ideal diode, 1.5A"
+        }
+      ],
+      "components": [
+        "C1",
+        "C2",
+        "J2",
+        "R3",
+        "R7",
+        "R8",
+        "U2",
+        "U3",
+        "U4",
+        "U9"
+      ],
+      "rails": [],
+      "hidden": false
+    },
+    {
+      "id": "capteurs",
+      "name": "Capteurs",
+      "category": "sensors",
+      "sheet": "capteurs.kicad_sch",
+      "items": [
+        {
+          "ref": "TH1",
+          "value": "10k NTC",
+          "description": "Temperature dependent resistor, negative temperature coefficient"
+        },
+        {
+          "ref": "U6",
+          "value": "BME280",
+          "description": "Combined humidity, pressure and temperature sensor"
+        }
+      ],
+      "components": [
+        "R9",
+        "TH1",
+        "U6"
+      ],
+      "rails": [
+        "+3V3"
+      ],
+      "hidden": false
+    },
+    {
+      "id": "debug",
+      "name": "Debug",
+      "category": "debug",
+      "sheet": "debug.kicad_sch",
+      "items": [
+        {
+          "ref": "J3",
+          "value": "Tag-Connect_TC2050",
+          "description": "Tag-Connect TC2050 SWD + UART"
+        }
+      ],
+      "components": [
+        "J3",
+        "R10"
+      ],
+      "rails": [],
+      "hidden": false
+    },
+    {
+      "id": "ihm",
+      "name": "IHM",
+      "category": "hmi",
+      "sheet": "ihm.kicad_sch",
+      "items": [
+        {
+          "ref": "SW1",
+          "value": "SW_Push",
+          "description": "Push button switch"
+        },
+        {
+          "ref": "SW2",
+          "value": "SW_Push",
+          "description": "Push button switch"
+        },
+        {
+          "ref": "U7",
+          "value": "SSD1306 OLED 128x64",
+          "description": "OLED display module, I2C"
+        }
+      ],
+      "components": [
+        "SW1",
+        "SW2",
+        "U7"
+      ],
+      "rails": [
+        "+3V3"
+      ],
+      "hidden": false
+    },
+    {
+      "id": "memoire",
+      "name": "Mémoire",
+      "category": "memory",
+      "sheet": "memoire.kicad_sch",
+      "items": [
+        {
+          "ref": "U8",
+          "value": "W25Q32JVSS",
+          "description": "32Mbit Serial Flash Memory, Standard/Dual/Quad SPI"
+        }
+      ],
+      "components": [
+        "C20",
+        "U8"
+      ],
+      "rails": [
+        "+3V3"
+      ],
+      "hidden": false
+    },
+    {
+      "id": "usb",
+      "name": "USB",
+      "category": "interface",
+      "sheet": "usb.kicad_sch",
+      "items": [
+        {
+          "ref": "J1",
+          "value": "USB_C_Receptacle_USB2.0",
+          "description": "USB 2.0-only Type-C Receptacle connector"
+        },
+        {
+          "ref": "U5",
+          "value": "USBLC6-2SC6",
+          "description": "Very low capacitance ESD protection diode, 2 data-line"
+        }
+      ],
+      "components": [
+        "J1",
+        "R1",
+        "R2",
+        "U5"
+      ],
+      "rails": [],
+      "hidden": false
+    }
+  ],
+  "links": [
+    {
+      "id": "L1",
+      "a": "mcu",
+      "b": "usb",
+      "kind": "usb",
+      "label": "USB",
+      "instance": "",
+      "nets": [
+        "USB_D+",
+        "USB_D-"
+      ],
+      "direction": "both",
+      "note": ""
+    },
+    {
+      "id": "L2",
+      "a": "mcu",
+      "b": "alim",
+      "kind": "gpio",
+      "label": "GPIO",
+      "instance": "",
+      "nets": [
+        "CHG_STAT"
+      ],
+      "direction": "ba",
+      "note": ""
+    },
+    {
+      "id": "L3",
+      "a": "mcu",
+      "b": "alim",
+      "kind": "analog",
+      "label": "Analogique",
+      "instance": "",
+      "nets": [
+        "VBAT_SENSE"
+      ],
+      "direction": "ba",
+      "note": ""
+    },
+    {
+      "id": "L4",
+      "a": "mcu",
+      "b": "capteurs",
+      "kind": "i2c",
+      "label": "I²C1",
+      "instance": "1",
+      "nets": [
+        "I2C_SCL",
+        "I2C_SDA"
+      ],
+      "direction": "ab",
+      "note": ""
+    },
+    {
+      "id": "L5",
+      "a": "mcu",
+      "b": "ihm",
+      "kind": "i2c",
+      "label": "I²C1",
+      "instance": "1",
+      "nets": [
+        "I2C_SCL",
+        "I2C_SDA"
+      ],
+      "direction": "ab",
+      "note": ""
+    },
+    {
+      "id": "L6",
+      "a": "mcu",
+      "b": "memoire",
+      "kind": "spi",
+      "label": "SPI1",
+      "instance": "1",
+      "nets": [
+        "FLASH_CS",
+        "SPI_MISO",
+        "SPI_MOSI",
+        "SPI_SCK"
+      ],
+      "direction": "ab",
+      "note": ""
+    },
+    {
+      "id": "L7",
+      "a": "mcu",
+      "b": "ihm",
+      "kind": "gpio",
+      "label": "GPIO ×2",
+      "instance": "",
+      "nets": [
+        "BTN1",
+        "BTN2"
+      ],
+      "direction": "ba",
+      "note": ""
+    },
+    {
+      "id": "L8",
+      "a": "mcu",
+      "b": "capteurs",
+      "kind": "analog",
+      "label": "Analogique",
+      "instance": "",
+      "nets": [
+        "CTN"
+      ],
+      "direction": "ba",
+      "note": ""
+    },
+    {
+      "id": "L9",
+      "a": "mcu",
+      "b": "debug",
+      "kind": "swd",
+      "label": "SWD",
+      "instance": "",
+      "nets": [
+        "NRST",
+        "SWCLK",
+        "SWDIO"
+      ],
+      "direction": "ab",
+      "note": ""
+    },
+    {
+      "id": "L10",
+      "a": "mcu",
+      "b": "debug",
+      "kind": "uart",
+      "label": "UART2",
+      "instance": "2",
+      "nets": [
+        "UART_RX",
+        "UART_TX"
+      ],
+      "direction": "both",
+      "note": ""
+    },
+    {
+      "id": "L11",
+      "a": "usb",
+      "b": "alim",
+      "kind": "power",
+      "label": "VBUS",
+      "instance": "",
+      "nets": [
+        "VBUS"
+      ],
+      "direction": "ab",
+      "note": ""
+    }
+  ],
+  "rails": [
+    "+3V3",
+    "VBAT",
+    "VBUS",
+    "VSYS"
+  ],
+  "power": [
+    {
+      "ref": "U2",
+      "value": "MCP73831-2-OT",
+      "role": "converter",
+      "block": "alim",
+      "inputs": [
+        "VBUS"
+      ],
+      "outputs": [
+        "VBAT"
+      ],
+      "current_ma": 1.0,
+      "imax_ma": null
+    },
+    {
+      "ref": "U3",
+      "value": "LM66100",
+      "role": "converter",
+      "block": "alim",
+      "inputs": [
+        "VBUS"
+      ],
+      "outputs": [
+        "VSYS"
+      ],
+      "current_ma": null,
+      "imax_ma": null
+    },
+    {
+      "ref": "U9",
+      "value": "LM66100",
+      "role": "converter",
+      "block": "alim",
+      "inputs": [
+        "VBAT"
+      ],
+      "outputs": [
+        "VSYS"
+      ],
+      "current_ma": null,
+      "imax_ma": null
+    },
+    {
+      "ref": "U4",
+      "value": "AP2112K-3.3",
+      "role": "converter",
+      "block": "alim",
+      "inputs": [
+        "VSYS"
+      ],
+      "outputs": [
+        "+3V3"
+      ],
+      "current_ma": null,
+      "imax_ma": 600.0
+    },
+    {
+      "ref": "J1",
+      "value": "USB_C_Receptacle_USB2.0",
+      "role": "source",
+      "block": "usb",
+      "inputs": [],
+      "outputs": [
+        "VBUS"
+      ],
+      "current_ma": null,
+      "imax_ma": null
+    },
+    {
+      "ref": "J2",
+      "value": "Conn_01x02 LiPo",
+      "role": "source",
+      "block": "alim",
+      "inputs": [],
+      "outputs": [
+        "VBAT"
+      ],
+      "current_ma": null,
+      "imax_ma": null
+    },
+    {
+      "ref": "U5",
+      "value": "USBLC6-2SC6",
+      "role": "load",
+      "block": "usb",
+      "inputs": [
+        "VBUS"
+      ],
+      "outputs": [],
+      "current_ma": null,
+      "imax_ma": null
+    },
+    {
+      "ref": "U1",
+      "value": "STM32L432KCUx",
+      "role": "load",
+      "block": "mcu",
+      "inputs": [
+        "+3V3"
+      ],
+      "outputs": [],
+      "current_ma": 12.0,
+      "imax_ma": null
+    },
+    {
+      "ref": "U6",
+      "value": "BME280",
+      "role": "load",
+      "block": "capteurs",
+      "inputs": [
+        "+3V3"
+      ],
+      "outputs": [],
+      "current_ma": 0.7,
+      "imax_ma": null
+    },
+    {
+      "ref": "U7",
+      "value": "SSD1306 OLED 128x64",
+      "role": "load",
+      "block": "ihm",
+      "inputs": [
+        "+3V3"
+      ],
+      "outputs": [],
+      "current_ma": 20.0,
+      "imax_ma": null
+    },
+    {
+      "ref": "U8",
+      "value": "W25Q32JVSS",
+      "role": "load",
+      "block": "memoire",
+      "inputs": [
+        "+3V3"
+      ],
+      "outputs": [],
+      "current_ma": 15.0,
+      "imax_ma": null
+    }
+  ],
+  "buses": [
+    {
+      "kind": "usb",
+      "instance": "",
+      "label": "USB",
+      "master": "U1",
+      "nets": [
+        "USB_D+",
+        "USB_D-"
+      ],
+      "devices": [
+        {
+          "ref": "J1",
+          "value": "USB_C_Receptacle_USB2.0",
+          "block": "usb",
+          "address": ""
+        },
+        {
+          "ref": "U5",
+          "value": "USBLC6-2SC6",
+          "block": "usb",
+          "address": ""
+        }
+      ],
+      "pullups": []
+    },
+    {
+      "kind": "i2c",
+      "instance": "1",
+      "label": "I²C1",
+      "master": "U1",
+      "nets": [
+        "I2C_SCL",
+        "I2C_SDA"
+      ],
+      "devices": [
+        {
+          "ref": "U6",
+          "value": "BME280",
+          "block": "capteurs",
+          "address": "0x76"
+        },
+        {
+          "ref": "U7",
+          "value": "SSD1306 OLED 128x64",
+          "block": "ihm",
+          "address": "0x3C"
+        }
+      ],
+      "pullups": [
+        "R5",
+        "R6"
+      ]
+    },
+    {
+      "kind": "spi",
+      "instance": "1",
+      "label": "SPI1",
+      "master": "U1",
+      "nets": [
+        "FLASH_CS",
+        "SPI_MISO",
+        "SPI_MOSI",
+        "SPI_SCK"
+      ],
+      "devices": [
+        {
+          "ref": "U8",
+          "value": "W25Q32JVSS",
+          "block": "memoire",
+          "address": ""
+        }
+      ],
+      "pullups": []
+    },
+    {
+      "kind": "uart",
+      "instance": "2",
+      "label": "UART2",
+      "master": "U1",
+      "nets": [
+        "UART_RX",
+        "UART_TX"
+      ],
+      "devices": [
+        {
+          "ref": "J3",
+          "value": "Tag-Connect_TC2050",
+          "block": "debug",
+          "address": ""
+        }
+      ],
+      "pullups": []
+    },
+    {
+      "kind": "swd",
+      "instance": "",
+      "label": "SWD",
+      "master": "U1",
+      "nets": [
+        "NRST",
+        "SWCLK",
+        "SWDIO"
+      ],
+      "devices": [
+        {
+          "ref": "J3",
+          "value": "Tag-Connect_TC2050",
+          "block": "debug",
+          "address": ""
+        }
+      ],
+      "pullups": []
+    },
+    {
+      "kind": "analog",
+      "instance": "",
+      "label": "Analogique",
+      "master": "U1",
+      "nets": [
+        "CTN",
+        "VBAT_SENSE"
+      ],
+      "devices": [
+        {
+          "ref": "TH1",
+          "value": "10k NTC",
+          "block": "capteurs",
+          "address": ""
+        }
+      ],
+      "pullups": [
+        "R7",
+        "R9"
+      ]
+    },
+    {
+      "kind": "gpio",
+      "instance": "",
+      "label": "GPIO",
+      "master": "U1",
+      "nets": [
+        "BTN1",
+        "BTN2",
+        "CHG_STAT"
+      ],
+      "devices": [
+        {
+          "ref": "SW1",
+          "value": "SW_Push",
+          "block": "ihm",
+          "address": ""
+        },
+        {
+          "ref": "SW2",
+          "value": "SW_Push",
+          "block": "ihm",
+          "address": ""
+        },
+        {
+          "ref": "U2",
+          "value": "MCP73831-2-OT",
+          "block": "alim",
+          "address": ""
+        }
+      ],
+      "pullups": []
+    }
+  ],
+  "warnings": []
+}

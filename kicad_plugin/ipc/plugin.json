@@ -1,0 +1,22 @@
+{
+  "$schema": "https://go.kicad.org/api/schemas/v1",
+  "identifier": "com.github.axelboularot.easynoptique",
+  "name": "EasyNoptique",
+  "description": "Génère automatiquement les synoptiques (fonctionnel, alimentation, bus) du projet en SVG, draw.io et HTML.",
+  "runtime": {
+    "type": "python",
+    "min_version": "3.8"
+  },
+  "actions": [
+    {
+      "identifier": "easynoptique.generate",
+      "name": "Générer le synoptique",
+      "description": "Analyse le schéma et ouvre le synoptique généré",
+      "show-button": true,
+      "scopes": ["pcb"],
+      "entrypoint": "easynoptique_action.py",
+      "icons-light": ["icon-24.png", "icon-48.png"],
+      "icons-dark": ["icon-24.png", "icon-48.png"]
+    }
+  ]
+}
