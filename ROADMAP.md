@@ -44,8 +44,11 @@
 - ⬜ Fenêtre d'édition (wxPython) : listes des blocs et des liaisons, corrections enregistrées dans le YAML.
 
 ## Étape 7 : Intégration KiCad 🟡
-- 🟡 Action IPC (`plugin/`) écrite : à tester sous KiCad 9 (détection du projet ouvert via `kicad-python`).
-- ⬜ Paquet PCM (métadonnées, paquet Python embarqué), publication.
+- ✅ Plugin de l'éditeur de PCB (KiCad 6 à 9) : bouton dans la barre d'outils, lecture directe du PCB ouvert.
+- ✅ Paquet PCM installable depuis un fichier (`tools/build_pcm.py` → `release/`).
+- ⬜ Valider dans un vrai KiCad (6, 7, 8 et 9, Windows/Linux/macOS).
+- ⬜ Variante API IPC (`kicad_plugin/ipc/`) pour KiCad 9+, quand l'ancienne API sera retirée.
+- ⬜ Publication dans le dépôt officiel des plugins KiCad.
 
 ## Étape 8 : Version 1.0 ⬜
 - ⬜ Documentation utilisateur avec captures, tests sur projets réels, publication dans le dépôt de plugins KiCad.

@@ -30,10 +30,16 @@ def _rules_for(src: str, explicit: str | None) -> Rules:
 def generate(src: str, out_dir: str | None = None, formats=("svg", "drawio", "html", "json"), rules: str | None = None,
              views=tuple(VIEWS)) -> dict[str, Path]:
     """Analyse le projet et écrit les fichiers demandés. Renvoie {nom: chemin}."""
-    nl = load(src)
-    syn = analyze(nl, _rules_for(src, rules))
     base = Path(src)
     out = Path(out_dir) if out_dir else (base if base.is_dir() else base.parent) / "synoptique"
+    return generate_from_netlist(load(src), out, _rules_for(src, rules), formats, views)
+
+
+def generate_from_netlist(nl, out: Path, rules: Rules | None = None, formats=("svg", "drawio", "html", "json"),
+                          views=tuple(VIEWS)) -> dict[str, Path]:
+    """Écrit les synoptiques d'une netlist déjà chargée (utilisé aussi par le plugin KiCad)."""
+    syn = analyze(nl, rules or Rules())
+    out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     stem = slug(syn.project or "projet")
     scenes = {v: VIEWS[v](syn) for v in views}

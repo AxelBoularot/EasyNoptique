@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
-      - run: ruff check easynoptique tests
+      - run: ruff check easynoptique tests tools kicad_plugin
       - run: pytest -q
       - name: Génère l'exemple
         run: easynoptique render tests/fixtures/meteo-poche.xml -o build/exemple

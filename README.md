@@ -9,19 +9,31 @@ Les sorties sont en SVG, **draw.io** (retouchable, un calque par type de liaison
 Autres vues : [alimentation](docs/exemple/station-meteo-de-poche-alimentation.svg) ·
 [bus](docs/exemple/station-meteo-de-poche-bus.svg) · [fichier draw.io](docs/exemple/station-meteo-de-poche.drawio).*
 
-> **État : prototype (v0.1).** Le cœur (analyse, placement, exports) fonctionne et est testé. L'intégration
-> dans KiCad (plugin IPC) est écrite mais reste à valider sur une installation KiCad 9. Voir [ROADMAP.md](ROADMAP.md).
+> **État : prototype (v0.1).** Le cœur (analyse, placement, exports) fonctionne et est testé. Le plugin KiCad
+> est testé avec un KiCad simulé ; il reste à le valider dans un vrai KiCad. Voir [ROADMAP.md](ROADMAP.md).
 
-## Installation
+## Installation dans KiCad (plugin)
+
+1. Téléchargez [`release/EasyNoptique-0.1.0-kicad.zip`](release/EasyNoptique-0.1.0-kicad.zip) (bouton « Download raw file »).
+2. Dans KiCad : **Gestionnaire de plugins et de contenus** → **Installer depuis un fichier…** → choisissez le `.zip`.
+3. Ouvrez votre circuit dans l'**éditeur de PCB**. Un bouton EasyNoptique apparaît dans la barre d'outils
+   (sinon : **Outils → Outils externes → Actualiser les plugins**).
+4. Cliquez dessus : les synoptiques sont écrits dans le dossier `synoptique/` du projet et le rapport s'ouvre
+   dans le navigateur.
+
+Le plugin lit le PCB ouvert : pensez à le mettre à jour depuis le schéma (**F8**) avant. Il fonctionne de
+KiCad 6 à 9 avec le Python fourni par KiCad, sans rien installer d'autre.
+
+## Installation en ligne de commande (optionnel)
 
 ```bash
-pip install -e .            # depuis ce dépôt
+pip install -e .            # depuis ce dépôt, Python 3.8 ou plus
 ```
 
-Il faut **KiCad 7 ou plus** installé : EasyNoptique utilise `kicad-cli` pour lire le schéma. Si `kicad-cli`
-n'est pas dans le `PATH`, indiquez son chemin dans la variable `KICAD_CLI`.
+La ligne de commande lit le schéma via `kicad-cli` (KiCad 7 ou plus). S'il n'est pas trouvé automatiquement,
+indiquez son chemin dans la variable `KICAD_CLI`.
 
-## Utilisation
+## Utilisation en ligne de commande
 
 ```bash
 easynoptique analyse  mon-projet.kicad_pro     # ce qui a été détecté (blocs, liaisons, alim, alertes)
@@ -87,4 +99,6 @@ python tests/fixtures/make_meteo.py   # régénère la netlist d'exemple
 ```
 
 Architecture : `netlist.py` (lecture) → `analyze.py` (modèle) → `layout.py` (placement) →
-`render_svg.py` / `render_drawio.py` / `report.py` (exports). `plugin/` contient l'action KiCad.
+`render_svg.py` / `render_drawio.py` / `report.py` (exports). `kicad_board.py` lit le PCB ouvert dans KiCad.
+`kicad_plugin/` contient le plugin de l'éditeur de PCB (et `kicad_plugin/ipc/`, une variante pour l'API IPC de
+KiCad 9) ; `python tools/build_pcm.py` construit le `.zip` à installer.

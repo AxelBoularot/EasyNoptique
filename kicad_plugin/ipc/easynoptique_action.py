@@ -10,7 +10,7 @@ import webbrowser
 from pathlib import Path
 
 # En développement, le paquet easynoptique se trouve à côté du dossier plugin/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from easynoptique.cli import generate  # noqa: E402
