@@ -18,6 +18,25 @@ _CANDIDATES = [
 ]
 
 
+def _windows_candidates() -> list[str]:
+    """Toutes les installations KiCad Windows (toutes versions, machine ou utilisateur), la plus récente d'abord."""
+    roots = [os.environ.get("ProgramFiles", r"C:\Program Files"), os.environ.get("ProgramFiles(x86)", ""),
+             os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs"), r"D:\Program Files"]
+    found = []
+    for root in filter(None, roots):
+        base = Path(root) / "KiCad"
+        if base.is_dir():
+            found += list(base.glob("*/bin/kicad-cli.exe")) + list(base.glob("bin/kicad-cli.exe"))
+
+    def version(p: Path):
+        try:
+            return tuple(int(x) for x in p.parent.parent.name.split("."))
+        except ValueError:
+            return (0,)
+
+    return [str(p) for p in sorted(found, key=version, reverse=True)]
+
+
 def find_kicad_cli() -> str | None:
     env = os.environ.get("KICAD_CLI")
     if env and Path(env).exists():
@@ -25,7 +44,8 @@ def find_kicad_cli() -> str | None:
     found = shutil.which("kicad-cli")
     if found:
         return found
-    return next((c for c in _CANDIDATES if Path(c).exists()), None)
+    candidates = (_windows_candidates() if os.name == "nt" else []) + _CANDIDATES
+    return next((c for c in candidates if Path(c).exists()), None)
 
 
 def export_netlist(schematic: Path, output: Path) -> Path:
